@@ -1,0 +1,97 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Compute version
+        id: version
+        run: |
+          latest=$(gh release list -R ${{ github.repository }} --limit 1 --json tagName -q '.[0].tagName // empty' 2>/dev/null || echo "")
+          if [ -z "$latest" ]; then
+            echo "version=v0.1.0" >> $GITHUB_OUTPUT
+          else
+            patch=$(echo "$latest" | sed 's/v[0-9]*\.[0-9]*\.//')
+            echo "version=v0.1.$((patch + 1))" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get engine version from go.mod
+        id: engine
+        run: echo "version=$(grep 'github.com/nelsong6/fzt ' go.mod | awk '{print $2}')" >> $GITHUB_OUTPUT
+      - name: Build WASM
+        run: >
+          go build
+          -ldflags="-X github.com/nelsong6/fzt/render.Version=${{ steps.version.outputs.version }}
+          -X github.com/nelsong6/fzt-frontend.EngineVersion=${{ steps.engine.outputs.version }}"
+          -o fzt.wasm .
+        env:
+          GOOS: js
+          GOARCH: wasm
+          CGO_ENABLED: "0"
+      - name: Stage release assets
+        run: |
+          mkdir -p release
+          cp fzt.wasm release/
+          cp fzt-terminal.js release/
+          cp fzt-terminal.css release/
+          cp fzt-web.js release/
+          cp fzt-dom-renderer.js release/
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ steps.version.outputs.version }} \
+            release/* \
+            --title "${{ steps.version.outputs.version }}" \
+            --generate-notes
+
+      - name: Azure Login via OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.ARM_CLIENT_ID }}
+          tenant-id: ${{ vars.ARM_TENANT_ID }}
+          subscription-id: ${{ vars.ARM_SUBSCRIPTION_ID }}
+
+      - name: Get GitHub App credentials from Key Vault
+        id: app-creds
+        run: |
+          APP_ID=$(az keyvault secret show --vault-name ${{ vars.KEY_VAULT_NAME }} --name github-app-id --query value -o tsv)
+          echo "::add-mask::$APP_ID"
+          echo "app_id=$APP_ID" >> $GITHUB_OUTPUT
+          PRIVATE_KEY=$(az keyvault secret show --vault-name ${{ vars.KEY_VAULT_NAME }} --name github-app-private-key --query value -o tsv)
+          echo "::add-mask::$PRIVATE_KEY"
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "private_key<<$EOF" >> $GITHUB_OUTPUT
+          echo "$PRIVATE_KEY" >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ steps.app-creds.outputs.app_id }}
+          private-key: ${{ steps.app-creds.outputs.private_key }}
+          repositories: fzt-showcase,my-homepage
+
+      - name: Notify downstream repos
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          for repo in nelsong6/fzt-showcase nelsong6/my-homepage; do
+            gh api repos/$repo/dispatches \
+              -f event_type=fzt-updated
+          done
