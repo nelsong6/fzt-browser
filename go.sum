@@ -16,6 +16,8 @@ github.com/nelsong6/fzt-frontend v0.1.25 h1:/37QGRwGBabCsmUk3+WmuWpWxxMupgcXyzoc
 github.com/nelsong6/fzt-frontend v0.1.25/go.mod h1:fE6DwPAXAotIQPkE0oFR+1Asw3nX6DA+azfL/GCqATs=
 github.com/nelsong6/fzt-terminal v0.1.80 h1:EOe/uZKb7fB0Cr+BuZXkHOKpfcL6UniirZAvMpmkzJc=
 github.com/nelsong6/fzt-terminal v0.1.80/go.mod h1:2H8XQAmgJAWgSm6ug+72GDaIRGsOYpNiSLyJE4YwNjM=
+github.com/nelsong6/fzt-terminal v0.1.81 h1:4fn7oMKhcTdwMFlTWgUysk5+Zy6qQpmC+Srzq5Rtpw0=
+github.com/nelsong6/fzt-terminal v0.1.81/go.mod h1:2H8XQAmgJAWgSm6ug+72GDaIRGsOYpNiSLyJE4YwNjM=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/rivo/uniseg v0.4.7 h1:WUdvkW8uEhrYfLC4ZzdpI2ztxP1I582+49Oc5Mq64VQ=

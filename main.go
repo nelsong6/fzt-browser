@@ -198,6 +198,18 @@ func handleKey(this js.Value, args []js.Value) interface{} {
 
 	frame, action := session.HandleKey(key, ch)
 
+	// Route "select:" actions inside the `:` palette through ProcessAction so
+	// internally-handled commands (:whoami, ::version, ::validate, etc.)
+	// actually execute instead of leaking as raw "select:<name>" strings to
+	// JavaScript. ProcessAction may mutate state (SetTitle, clear search),
+	// so re-render afterwards to capture those mutations in the returned
+	// frame. In the tcell event loop this happens via a natural redraw tick;
+	// the WASM bridge has no tick, so the re-render has to be explicit.
+	action = tui.ProcessAction(session.State(), action)
+	if action == "" {
+		frame = session.Render()
+	}
+
 	obj := js.Global().Get("Object").New()
 	obj.Set("ansi", frame.ANSI)
 	obj.Set("cursorX", frame.CursorX)
