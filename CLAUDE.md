@@ -34,11 +34,13 @@ The Go code exposes a global `fzt` object:
 
 ## CI
 
-GitHub Actions workflow (`.github/workflows/build.yml`) on push to main:
+Three workflows, split by responsibility:
 
-1. **Build**: compile `fzt.wasm` via `GOOS=js GOARCH=wasm`, inject `render.Version` and `frontend.EngineVersion` via ldflags.
-2. **Release**: auto-increments patch version, creates GitHub release with `fzt.wasm` + the four JS/CSS files.
-3. **Downstream dispatch**: notifies `fzt-showcase` and `my-homepage` via `repository_dispatch` (GitHub App token from Key Vault).
+- **`.github/workflows/dispatch.yml`** (fires on `repository_dispatch: [fzt-updated]`) — upstream cascade. Calls `go-dependency-update-template`: bumps `github.com/nelsong6/fzt` + `github.com/nelsong6/fzt-terminal` in go.mod, commits, pushes, then delegates to `release-and-dispatch-template` to cut the release and dispatch downstream.
+- **`.github/workflows/release.yml`** (fires on `push: branches: [main]` with `paths-ignore: [go.mod, go.sum]`, plus `workflow_dispatch`) — direct-push release path for code changes. Calls `release-and-dispatch-template` directly. Shared `release-tag` concurrency group with `dispatch.yml`.
+- **`.github/workflows/build.yml`** (fires on `workflow_dispatch` from the release template with the new tag as input) — compiles `fzt.wasm` via `GOOS=js GOARCH=wasm` (injecting `render.Version` and `frontend.EngineVersion` via ldflags), packages the four JS/CSS files, and `gh release upload`s them to the already-created release. Tag is passed by value so no sha-drift race.
+
+Downstream consumers notified via `repository_dispatch`: `fzt-showcase` and `my-homepage` (both download the release assets at deploy time). GitHub App token from Azure Key Vault. Template lives at `nelsong6/pipeline-templates`.
 
 ## History
 
