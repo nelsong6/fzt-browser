@@ -288,32 +288,20 @@ func translateKey(key string, ctrl, shift bool) (tcell.Key, rune) {
 		}
 		return tcell.KeyTab, 0
 	case "Home":
-		return tcell.KeyCtrlA, 0
+		return tcell.KeyHome, 0
 	case "End":
-		return tcell.KeyCtrlE, 0
+		return tcell.KeyEnd, 0
 	}
 
 	// Single character keys
 	if len(key) == 1 {
 		r := rune(key[0])
+		// Ecosystem-wide policy: no Ctrl bindings anywhere. Any Ctrl+letter
+		// combo is a silent no-op (returning KeyRune with ch=0 means "nothing
+		// to insert"). Shift is Shift and passes through as the literal
+		// character (the browser already folds it into the key string).
 		if ctrl {
-			switch r {
-			case 'a', 'A':
-				return tcell.KeyCtrlA, 0
-			case 'e', 'E':
-				return tcell.KeyCtrlE, 0
-			case 'u', 'U':
-				return tcell.KeyCtrlU, 0
-			case 'w', 'W':
-				return tcell.KeyCtrlW, 0
-			case 'p', 'P':
-				return tcell.KeyCtrlP, 0
-			case 'n', 'N':
-				return tcell.KeyCtrlN, 0
-			case 'c', 'C':
-				return tcell.KeyCtrlC, 0
-			}
-			return tcell.KeyRune, 0 // unknown ctrl combo — ignore
+			return tcell.KeyRune, 0
 		}
 		return tcell.KeyRune, r
 	}
