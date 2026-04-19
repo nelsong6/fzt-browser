@@ -1,8 +1,10 @@
 name: Dependency Update
 
+# Auto-trigger disabled — Claude-driven CI. `repository_dispatch` from
+# upstream releases is ignored. Run manually via
+# `gh workflow run dispatch.yml -R nelsong6/fzt-browser`.
 on:
-  repository_dispatch:
-    types: [fzt-updated]
+  workflow_dispatch:
 
 # The called reusable workflow declares contents:write + actions:write. Without
 # these granted on the caller, the token falls back to the repo default ('read')
