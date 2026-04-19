@@ -51,13 +51,6 @@ function createTitleBar(ui) {
     bar.appendChild(title);
   }
 
-  if (ui.version) {
-    const ver = document.createElement('span');
-    ver.className = 'fzt-version';
-    ver.textContent = ui.version;
-    bar.appendChild(ver);
-  }
-
   return bar;
 }
 

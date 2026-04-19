@@ -336,7 +336,6 @@ func getUIState(this js.Value, args []js.Value) interface{} {
 	obj := js.Global().Get("Object").New()
 	obj.Set("title", ui.Title)
 	obj.Set("titlePos", ui.TitlePos)
-	obj.Set("version", ui.Version)
 	obj.Set("label", ui.Label)
 	obj.Set("border", ui.Border)
 	obj.Set("treeOffset", ui.TreeOffset)
