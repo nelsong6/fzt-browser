@@ -428,6 +428,12 @@ export function createFztTerminal(container, options = {}) {
       if (result && !(result instanceof Error)) render(result);
     },
 
+    setIdentity(identity) {
+      if (!ready) return;
+      fzt.setIdentity(identity);
+      // No render — identity only becomes visible when the user invokes :whoami.
+    },
+
     init() {
       if (!ready) return;
       const { cols, rows } = computeGridSize();

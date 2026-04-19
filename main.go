@@ -30,6 +30,7 @@ func main() {
 		"resize":      js.FuncOf(resize),
 		"loadYAML":    js.FuncOf(loadYAML),
 		"setLabel":    js.FuncOf(setLabel),
+		"setIdentity": js.FuncOf(setIdentity),
 		"addCommands": js.FuncOf(addCommands),
 		"setFrontend":    js.FuncOf(setFrontend),
 		"getVisibleRows": js.FuncOf(getVisibleRows),
@@ -58,6 +59,26 @@ func setLabel(this js.Value, args []js.Value) interface{} {
 }
 
 var pendingLabel string
+
+// setIdentity sets the loaded identity string consumed by the :whoami palette
+// leaf, which emits it as a one-shot title-bar status. Unlike setLabel, this
+// is not rendered anywhere automatically — only when the user invokes whoami.
+// Args: identity (string)
+// Returns: null (no visible state change, no re-render needed)
+func setIdentity(this js.Value, args []js.Value) interface{} {
+	if len(args) < 1 {
+		return jsError("setIdentity requires an identity string")
+	}
+	identity := args[0].String()
+	if session != nil {
+		session.State().IdentityLabel = identity
+		return js.Null()
+	}
+	pendingIdentity = identity
+	return js.Null()
+}
+
+var pendingIdentity string
 
 // addCommands registers frontend-specific commands for the `:` palette.
 // Args: commands (array of {name: string, description: string, action: string})
@@ -145,6 +166,10 @@ func initSession(this js.Value, args []js.Value) interface{} {
 	if pendingLabel != "" {
 		session.SetLabel(pendingLabel)
 		pendingLabel = ""
+	}
+	if pendingIdentity != "" {
+		session.State().IdentityLabel = pendingIdentity
+		pendingIdentity = ""
 	}
 	frame := session.Render()
 	return frameToJS(frame)
