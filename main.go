@@ -221,7 +221,7 @@ func handleKey(this js.Value, args []js.Value) interface{} {
 		return js.Null()
 	}
 
-	frame, action := session.HandleKey(key, ch)
+	frame, action := session.HandleKey(key, ch, shift)
 
 	// Route "select:" actions inside the `:` palette through ProcessAction so
 	// internally-handled commands (:whoami, ::version, ::validate, etc.)
