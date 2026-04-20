@@ -433,6 +433,18 @@ export function createFztTerminal(container, options = {}) {
       if (result && !(result instanceof Error)) render(result);
     },
 
+    setStatus(msg, style = 0) {
+      if (!ready) return;
+      const result = fzt.setStatus(msg, style);
+      if (result && !(result instanceof Error)) render(result);
+    },
+
+    clearStatus() {
+      if (!ready) return;
+      const result = fzt.clearStatus();
+      if (result && !(result instanceof Error)) render(result);
+    },
+
     setIdentity(identity) {
       if (!ready) return;
       fzt.setIdentity(identity);

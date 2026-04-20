@@ -18,6 +18,8 @@ The Go code exposes a global `fzt` object:
 - `fzt.setFrontend({name, version})` — register frontend identity
 - `fzt.addCommands([{name, description, action}])` — register frontend commands for `:` palette
 - `fzt.setLabel(text)` — set the top-left border label
+- `fzt.setStatus(msg, style)` — write to the title bar status area. `style` maps to `core.State.TitleStyle` (0=default cyan, 1=green success, 2=red error, 3=neutral slate). Requires an active session; returns a frame for immediate render.
+- `fzt.clearStatus()` — remove the title override, restoring the default title.
 - `fzt.init(cols, rows)` — create session, returns `{ansi, cursorX, cursorY}`
 - `fzt.handleKey(key, ctrl, shift)` — process keyboard event, returns frame + action. The `ctrl` bool is accepted but ignored — the ecosystem retired Ctrl bindings entirely (my-homepage#24); any Ctrl+letter is a silent no-op. Kept in the signature so JS callers don't break; can be dropped whenever downstream consumers update.
 - `fzt.clickRow(row)` — process mouse click on visual row

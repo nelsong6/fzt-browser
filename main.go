@@ -36,6 +36,8 @@ func main() {
 		"addCommands": js.FuncOf(addCommands),
 		"setFrontend":    js.FuncOf(setFrontend),
 		"hidePalette":    js.FuncOf(hidePalette),
+		"setStatus":      js.FuncOf(setStatus),
+		"clearStatus":    js.FuncOf(clearStatus),
 		"getVisibleRows": js.FuncOf(getVisibleRows),
 		"getPromptState": js.FuncOf(getPromptState),
 		"getUIState":     js.FuncOf(getUIState),
@@ -124,6 +126,38 @@ func setFrontend(this js.Value, args []js.Value) interface{} {
 func hidePalette(this js.Value, args []js.Value) interface{} {
 	pendingHidePalette = true
 	return js.Null()
+}
+
+// setStatus writes a message to the title bar status area. style maps to
+// core.State.TitleStyle: 0=default cyan, 1=green success, 2=red error,
+// 3=neutral slate. Requires an active session — no pending buffering.
+// Returns a SessionFrame (ansi, cursorX, cursorY) for the caller to
+// render; returns null if no session is active yet.
+func setStatus(this js.Value, args []js.Value) interface{} {
+	if len(args) < 1 {
+		return jsError("setStatus requires a message string")
+	}
+	msg := args[0].String()
+	style := 0
+	if len(args) >= 2 {
+		style = args[1].Int()
+	}
+	if session == nil {
+		return js.Null()
+	}
+	session.State().SetTitle(msg, style)
+	return frameToJS(session.Render())
+}
+
+// clearStatus removes the title override, letting the default title render
+// again. Returns a SessionFrame for the caller to render; null if no
+// session is active.
+func clearStatus(this js.Value, args []js.Value) interface{} {
+	if session == nil {
+		return js.Null()
+	}
+	session.State().ClearTitle()
+	return frameToJS(session.Render())
 }
 
 // loadYAML parses YAML and stores items, but does not create a session.
