@@ -25,9 +25,8 @@ jobs:
     uses: nelsong6/pipeline-templates/.github/workflows/go-dependency-update-template.yml@main
     with:
       modules: github.com/nelsong6/fzt github.com/nelsong6/fzt-terminal
-      # Atomic path: template bumps go.mod, cuts the release at the pushed
-      # sha, triggers build.yml with the new tag to build+upload wasm/JS
-      # assets, and dispatches fzt-updated to my-homepage + fzt-showcase.
-      dispatch-repos: my-homepage,fzt-showcase
-      dispatch-event: fzt-updated
+      # Template bumps go.mod, cuts the release at the pushed sha, then
+      # triggers build.yml with the new tag to build and upload the
+      # wasm/JS assets. Downstream consumers (my-homepage, fzt-showcase)
+      # are Claude-driven now — no repository_dispatch fan-out.
       artifact-build-workflow: build.yml

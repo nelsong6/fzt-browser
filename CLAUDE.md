@@ -19,7 +19,7 @@ The Go code exposes a global `fzt` object:
 - `fzt.addCommands([{name, description, action}])` — register frontend commands for `:` palette
 - `fzt.setLabel(text)` — set the top-left border label
 - `fzt.init(cols, rows)` — create session, returns `{ansi, cursorX, cursorY}`
-- `fzt.handleKey(key, ctrl, shift)` — process keyboard event, returns frame + action
+- `fzt.handleKey(key, ctrl, shift)` — process keyboard event, returns frame + action. The `ctrl` bool is accepted but ignored — the ecosystem retired Ctrl bindings entirely (my-homepage#24); any Ctrl+letter is a silent no-op. Kept in the signature so JS callers don't break; can be dropped whenever downstream consumers update.
 - `fzt.clickRow(row)` — process mouse click on visual row
 - `fzt.resize(cols, rows)` — resize terminal
 - `fzt.getVisibleRows()` / `fzt.getPromptState()` / `fzt.getUIState()` — structured data API for the DOM renderer
@@ -34,13 +34,13 @@ The Go code exposes a global `fzt` object:
 
 ## CI
 
-Three workflows, split by responsibility:
+Three workflows, all manually triggered (Claude-driven):
 
-- **`.github/workflows/dispatch.yml`** (fires on `repository_dispatch: [fzt-updated]`) — upstream cascade. Calls `go-dependency-update-template`: bumps `github.com/nelsong6/fzt` + `github.com/nelsong6/fzt-terminal` in go.mod, commits, pushes, then delegates to `release-and-dispatch-template` to cut the release and dispatch downstream.
-- **`.github/workflows/release.yml`** (fires on `push: branches: [main]` with `paths-ignore: [go.mod, go.sum]`, plus `workflow_dispatch`) — direct-push release path for code changes. Calls `release-and-dispatch-template` directly. Shared `release-tag` concurrency group with `dispatch.yml`.
+- **`.github/workflows/dispatch.yml`** (`workflow_dispatch`) — dependency bump path. Calls `go-dependency-update-template`: bumps `github.com/nelsong6/fzt` + `github.com/nelsong6/fzt-terminal` in go.mod, commits, pushes, then delegates to `release-and-dispatch-template` to cut the release.
+- **`.github/workflows/release.yml`** (`workflow_dispatch`) — direct-push release path for code changes. Calls `release-and-dispatch-template` directly. Shared `release-tag` concurrency group with `dispatch.yml`.
 - **`.github/workflows/build.yml`** (fires on `workflow_dispatch` from the release template with the new tag as input) — compiles `fzt.wasm` via `GOOS=js GOARCH=wasm` (injecting `render.Version` and `frontend.EngineVersion` via ldflags), packages the four JS/CSS files, and `gh release upload`s them to the already-created release. Tag is passed by value so no sha-drift race.
 
-Downstream consumers notified via `repository_dispatch`: `fzt-showcase` and `my-homepage` (both download the release assets at deploy time). GitHub App token from Azure Key Vault. Template lives at `nelsong6/pipeline-templates`.
+Downstream consumers (`fzt-showcase`, `my-homepage`) download the release assets at deploy time and are updated manually — no `repository_dispatch` fan-out. Template lives at `nelsong6/pipeline-templates`.
 
 ## History
 

@@ -407,6 +407,11 @@ export function createFztTerminal(container, options = {}) {
       fzt.setFrontend(info);
     },
 
+    hidePalette() {
+      if (!ready) return;
+      fzt.hidePalette();
+    },
+
     getVisibleRows() {
       if (!ready || !sessionActive) return [];
       return fzt.getVisibleRows();

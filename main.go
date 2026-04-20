@@ -11,15 +11,17 @@ import (
 	"github.com/nelsong6/fzt-terminal/tui"
 )
 
-// Lifecycle: JS must call loadYAML, then optionally setFrontend/addCommands,
-// then init to create a session. The pending* variables buffer frontend identity
-// and commands because InjectCommandFolder runs during init and reads them from State.
-// After init, pending values are consumed and have no further effect.
+// Lifecycle: JS must call loadYAML, then optionally setFrontend/addCommands/
+// hidePalette, then init to create a session. The pending* variables buffer
+// frontend identity and commands because InjectCommandFolder runs during init
+// and reads them from State. After init, pending values are consumed and have
+// no further effect.
 var (
-	currentItems     []core.Item
-	session          *tui.Session
-	pendingCommands  []core.CommandItem
-	pendingFrontend  struct{ name, version string }
+	currentItems       []core.Item
+	session            *tui.Session
+	pendingCommands    []core.CommandItem
+	pendingFrontend    struct{ name, version string }
+	pendingHidePalette bool
 )
 
 func main() {
@@ -33,6 +35,7 @@ func main() {
 		"setIdentity": js.FuncOf(setIdentity),
 		"addCommands": js.FuncOf(addCommands),
 		"setFrontend":    js.FuncOf(setFrontend),
+		"hidePalette":    js.FuncOf(hidePalette),
 		"getVisibleRows": js.FuncOf(getVisibleRows),
 		"getPromptState": js.FuncOf(getPromptState),
 		"getUIState":     js.FuncOf(getUIState),
@@ -114,6 +117,15 @@ func setFrontend(this js.Value, args []js.Value) interface{} {
 	return js.Null()
 }
 
+// hidePalette suppresses the visible `:` root row. The palette and its
+// commands still exist in the tree and remain reachable by typing `:`;
+// only the root row is hidden. Must be called before init().
+// No args, no return value.
+func hidePalette(this js.Value, args []js.Value) interface{} {
+	pendingHidePalette = true
+	return js.Null()
+}
+
 // loadYAML parses YAML and stores items, but does not create a session.
 func loadYAML(this js.Value, args []js.Value) interface{} {
 	if len(args) < 1 {
@@ -160,6 +172,9 @@ func initSession(this js.Value, args []js.Value) interface{} {
 	}
 	if len(pendingCommands) > 0 {
 		cfg.FrontendCommands = pendingCommands
+	}
+	if pendingHidePalette {
+		cfg.HidePalette = true
 	}
 
 	session = tui.NewTreeSession(items, cfg, cols, rows)
