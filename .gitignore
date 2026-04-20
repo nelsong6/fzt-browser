@@ -1,0 +1,3 @@
+# Stray build artifact when running bare `go build ./...` locally.
+# The real build target is fzt.wasm via GOOS=js GOARCH=wasm in build.yml.
+fzt-browser
