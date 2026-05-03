@@ -235,7 +235,7 @@ function shouldForwardKey(e, isActive, isEditMode, extraCheck) {
 //   nerdFontFamily   - font-family for wide/icon spans (default: 'Symbols Nerd Font Mono',monospace)
 //   cursorClass      - CSS class for cursor span (default: "fzt-cursor")
 //   containerPadding - px to subtract from each side for grid sizing (default: 0)
-//   onAction         - callback(action, url) for leaf selection / cancel
+//   onAction         - callback(action, url, event) for leaf selection / cancel
 //   onRender         - callback(frame) after each render
 //   shouldForwardKey - extra check(e) returning bool, called before forwarding
 //   defaultCursorPos - {x, y} fallback when Go hides cursor (default: {x:3, y:1})
@@ -308,7 +308,7 @@ export function createFztTerminal(container, options = {}) {
     return { cols, rows };
   }
 
-  function sendKey(key, ctrlKey, shiftKey) {
+  function sendKey(key, ctrlKey, shiftKey, altKey = false, metaKey = false) {
     try {
       const result = fzt.handleKey(key, ctrlKey, shiftKey);
       if (result instanceof Error) {
@@ -317,7 +317,14 @@ export function createFztTerminal(container, options = {}) {
       }
       render(result);
       if (result.action && onAction) {
-        onAction(result.action, result.url);
+        onAction(result.action, result.url, {
+          source: "keyboard",
+          key,
+          ctrlKey,
+          shiftKey,
+          altKey,
+          metaKey,
+        });
       }
     } catch (err) {
       console.error("handleKey threw:", err);
@@ -334,7 +341,7 @@ export function createFztTerminal(container, options = {}) {
       }
       render(result);
       if (result.action && onAction) {
-        onAction(result.action, result.url);
+        onAction(result.action, result.url, { source: "mouse", row });
       }
     } catch (err) {
       console.error("clickRow threw:", err);
@@ -361,7 +368,7 @@ export function createFztTerminal(container, options = {}) {
         if (!sessionActive) return;
         if (!shouldForwardKey(e, active, editMode, extraForwardCheck)) return;
         e.preventDefault();
-        sendKey(e.key, e.ctrlKey, e.shiftKey);
+        sendKey(e.key, e.ctrlKey, e.shiftKey, e.altKey, e.metaKey);
       };
       document.addEventListener("keydown", keydownHandler);
 
@@ -467,8 +474,8 @@ export function createFztTerminal(container, options = {}) {
       return true;
     },
 
-    handleKey(key, ctrlKey, shiftKey) {
-      sendKey(key, ctrlKey, shiftKey);
+    handleKey(key, ctrlKey, shiftKey, altKey = false, metaKey = false) {
+      sendKey(key, ctrlKey, shiftKey, altKey, metaKey);
     },
 
     clickRow(row) {

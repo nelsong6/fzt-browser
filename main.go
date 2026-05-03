@@ -8,6 +8,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/nelsong6/fzt/core"
+	"github.com/nelsong6/fzt/render"
 	"github.com/nelsong6/fzt-terminal/tui"
 )
 
@@ -236,7 +237,8 @@ func clickRow(this js.Value, args []js.Value) interface{} {
 	}
 	row := args[0].Int()
 
-	frame, action := session.ClickRow(row)
+	frame, result := session.ClickRowResult(row)
+	action := result.Action
 
 	obj := js.Global().Get("Object").New()
 	obj.Set("ansi", frame.ANSI)
@@ -244,7 +246,7 @@ func clickRow(this js.Value, args []js.Value) interface{} {
 	obj.Set("cursorY", frame.CursorY)
 	obj.Set("action", action)
 	if strings.HasPrefix(action, "select:") {
-		obj.Set("url", session.SelectedURL())
+		obj.Set("url", render.ActionURL(result))
 	}
 	return obj
 }
@@ -270,7 +272,8 @@ func handleKey(this js.Value, args []js.Value) interface{} {
 		return js.Null()
 	}
 
-	frame, action := session.HandleKey(key, ch, shift)
+	frame, result := session.HandleKeyResult(key, ch, shift)
+	action := result.Action
 
 	// Route "select:" actions inside the `:` palette through ProcessAction so
 	// internally-handled commands (:whoami, ::version, ::validate, etc.)
@@ -290,7 +293,7 @@ func handleKey(this js.Value, args []js.Value) interface{} {
 	obj.Set("cursorY", frame.CursorY)
 	obj.Set("action", action)
 	if strings.HasPrefix(action, "select:") {
-		obj.Set("url", session.SelectedURL())
+		obj.Set("url", render.ActionURL(result))
 	}
 	return obj
 }
